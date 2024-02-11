@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenStreetMap with Coordinates and Directions</title>
+    <!-- Add Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+    <!-- Add Bootstrap CSS -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Add custom CSS for map container -->
+    <style>
+        #map {
+            height: 700px;
+        }
+
+        #legend {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container-fluid mt-4">
+    <h2>OpenStreetMap with Coordinates and Directions</h2>
+    <!-- Map container -->
+    <div id="map"></div>
+    <div id="legend"></div>
+</div>
+
+<!-- Add Bootstrap and Leaflet JavaScript APIs -->
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    var data = /*[[${data}]]*/ {};
+    var centerLat = /*[[${centerLat}]]*/ {};
+    var centerLng = /*[[${centerLng}]]*/ {};
+
+    async function initMap() {
+    console.log(data);
+        var map = L.map('map').setView([centerLat, centerLng], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        for (var key in data) {
+            if (data.hasOwnProperty(key)) {
+                var routes = data[key];
+                var startDegree = routes[0].heading;
+                var endDegree = routes[routes.length - 1].heading;
+                var color = getRandomColor();
+                drawRoutes(map, routes, color);
+                createLegend(key, color, startDegree, endDegree);
+            }
+        }
+    }
+
+    function drawRoutes(map, coordinates, color) {
+    console.log(coordinates);
+            var finalCoordinates = coordinates.map(function(item) {
+                return [parseFloat(item.lat), parseFloat(item.lng)];
+            });
+
+            var polyline = L.polyline(finalCoordinates, { color: color }).addTo(map);
+
+            finalCoordinates.forEach((coord, index) => {
+                L.marker(coord, {
+                    icon: L.divIcon({
+                        className: 'custom-div-icon',
+                        html: `<div style="background-color:${color};" class="marker-pin"></div><span>${index + 1}</span>`
+                    })
+                }).addTo(map);
+
+        });
+    }
+
+   function createLegend(label, color, startDegree, endDegree) {
+        var legend = document.getElementById('legend');
+        var legendItem = document.createElement('div');
+        legendItem.className = 'legend-item';
+
+        var legendColor = document.createElement('div');
+        legendColor.className = 'legend-color';
+        legendColor.style.backgroundColor = color;
+
+        var legendLabel = document.createElement('div');
+        legendLabel.innerText = `${label}`;//(${startDegree}° - ${endDegree}°)
+
+        legendItem.appendChild(legendColor);
+        legendItem.appendChild(legendLabel);
+        legend.appendChild(legendItem);
+    }
+
+
+    function getRandomColor() {
+        var letters = '0123456789ABCDEF';
+        var color = '#';
+        for (var i = 0; i < 6; i++) {
+            color += letters[Math.floor(Math.random() * 16)];
+        }
+        return color;
+    }
+
+    // Initialize the map
+    initMap();
+    /*]]>*/
+</script>
+
+</body>
+</html>
